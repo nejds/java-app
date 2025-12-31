@@ -12,6 +12,9 @@ DB_PASSWORD=mysecretpassword \
 java -cp target/java-app-0.1.0-SNAPSHOT.jar com.example.app.App
 ```
 
+Notes:
+- `users.id` and `transactions.id` use `BIGSERIAL`, which auto-increments in PostgreSQL.
+
 ## Test
 
 ```bash
