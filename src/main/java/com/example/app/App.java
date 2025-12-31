@@ -54,26 +54,24 @@ public final class App {
 
   private static User createUser(Connection connection, String username) throws SQLException {
     String sql = "INSERT INTO users (username) VALUES (?) RETURNING id";
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setString(1, username);
-      try (ResultSet resultSet = statement.executeQuery()) {
-        resultSet.next();
-        long id = resultSet.getLong(1);
-        return new User(id, username);
-      }
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setString(1, username);
+    try (statement; ResultSet resultSet = statement.executeQuery()) {
+      resultSet.next();
+      long id = resultSet.getLong(1);
+      return new User(id, username);
     }
   }
 
   private static User getUserByUsername(Connection connection, String username) throws SQLException {
     String sql = "SELECT id, username FROM users WHERE username = ?";
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setString(1, username);
-      try (ResultSet resultSet = statement.executeQuery()) {
-        if (!resultSet.next()) {
-          return createUser(connection, username);
-        }
-        return new User(resultSet.getLong("id"), resultSet.getString("username"));
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setString(1, username);
+    try (statement; ResultSet resultSet = statement.executeQuery()) {
+      if (!resultSet.next()) {
+        return createUser(connection, username);
       }
+      return new User(resultSet.getLong("id"), resultSet.getString("username"));
     }
   }
 
@@ -84,14 +82,13 @@ public final class App {
         VALUES (?, ?, ?)
         RETURNING id
         """;
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setLong(1, userId);
-      statement.setInt(2, amountCents);
-      statement.setString(3, type);
-      try (ResultSet resultSet = statement.executeQuery()) {
-        resultSet.next();
-        return resultSet.getLong(1);
-      }
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setLong(1, userId);
+    statement.setInt(2, amountCents);
+    statement.setString(3, type);
+    try (statement; ResultSet resultSet = statement.executeQuery()) {
+      resultSet.next();
+      return resultSet.getLong(1);
     }
   }
 
@@ -101,41 +98,46 @@ public final class App {
         FROM transactions
         WHERE id = ?
         """;
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setLong(1, id);
-      try (ResultSet resultSet = statement.executeQuery()) {
-        if (!resultSet.next()) {
-          return null;
-        }
-        return new Transaction(
-            resultSet.getLong("id"),
-            resultSet.getLong("user_id"),
-            resultSet.getInt("amount_cents"),
-            resultSet.getString("type"),
-            resultSet.getTimestamp("created_at"));
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setLong(1, id);
+    try (statement; ResultSet resultSet = statement.executeQuery()) {
+      if (!resultSet.next()) {
+        return null;
       }
+      return new Transaction(
+          resultSet.getLong("id"),
+          resultSet.getLong("user_id"),
+          resultSet.getInt("amount_cents"),
+          resultSet.getString("type"),
+          resultSet.getTimestamp("created_at"));
     }
   }
 
   private static boolean deleteTransaction(Connection connection, long id) throws SQLException {
     String sql = "DELETE FROM transactions WHERE id = ?";
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setLong(1, id);
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setLong(1, id);
+    try (statement) {
       return statement.executeUpdate() == 1;
     }
   }
 
   private static void runDemo(Connection connection) throws SQLException {
-    String userName = "gustav2";
+
+    // Login as user
+    String userName = "gustav";
     User user = getUserByUsername(connection, userName);
     System.out.println("User: " + user);
   
-    long transactionId = createTransaction(connection, user.id(), 200, "income");
-    
+    // Create transaction
+    long transactionId = createTransaction(connection, user.id(), 4530, "income");
+
+    // Retrieve transaction
     Transaction transaction = getTransaction(connection, transactionId);
     System.out.println("User: " + user);
     System.out.println("Transaction: " + transaction);
 
+    // Delete said transaction
     // deleteTransaction(connection, transactionId);
   }
 
