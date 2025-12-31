@@ -52,35 +52,28 @@ public final class App {
     }
   }
 
-  private static long createUser(Connection connection, String username) throws SQLException {
+  private static User createUser(Connection connection, String username) throws SQLException {
     String sql = "INSERT INTO users (username) VALUES (?) RETURNING id";
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
       statement.setString(1, username);
       try (ResultSet resultSet = statement.executeQuery()) {
         resultSet.next();
-        return resultSet.getLong(1);
+        long id = resultSet.getLong(1);
+        return new User(id, username);
       }
     }
   }
 
-  private static User getUser(Connection connection, long id) throws SQLException {
-    String sql = "SELECT id, username FROM users WHERE id = ?";
+  private static User getUserByUsername(Connection connection, String username) throws SQLException {
+    String sql = "SELECT id, username FROM users WHERE username = ?";
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setLong(1, id);
+      statement.setString(1, username);
       try (ResultSet resultSet = statement.executeQuery()) {
         if (!resultSet.next()) {
-          return null;
+          return createUser(connection, username);
         }
         return new User(resultSet.getLong("id"), resultSet.getString("username"));
       }
-    }
-  }
-
-  private static boolean deleteUser(Connection connection, long id) throws SQLException {
-    String sql = "DELETE FROM users WHERE id = ?";
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setLong(1, id);
-      return statement.executeUpdate() == 1;
     }
   }
 
@@ -133,16 +126,17 @@ public final class App {
   }
 
   private static void runDemo(Connection connection) throws SQLException {
-    long userId = createUser(connection, "gustav");
-    long transactionId = createTransaction(connection, userId, 200, "income");
-
-    User user = getUser(connection, userId);
+    String userName = "gustav2";
+    User user = getUserByUsername(connection, userName);
+    System.out.println("User: " + user);
+  
+    long transactionId = createTransaction(connection, user.id(), 200, "income");
+    
     Transaction transaction = getTransaction(connection, transactionId);
     System.out.println("User: " + user);
     System.out.println("Transaction: " + transaction);
 
     // deleteTransaction(connection, transactionId);
-    // deleteUser(connection, userId);
   }
 
   private record User(long id, String username) {}
