@@ -32,16 +32,16 @@ public final class App {
   private static void createTables(Connection connection) throws SQLException {
     String usersSql = """
         CREATE TABLE IF NOT EXISTS users (
-          userID BIGSERIAL PRIMARY KEY,
+          user_id BIGSERIAL PRIMARY KEY,
           username TEXT NOT NULL UNIQUE
         )
         """;
     String transactionsSql = """
         CREATE TABLE IF NOT EXISTS transactions (
-          transactionID BIGSERIAL PRIMARY KEY,
-          userID BIGINT NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
+          transaction_id BIGSERIAL PRIMARY KEY,
+          user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
           amount INTEGER NOT NULL,
-          type TEXT NOT NULL CHECK (type IN ('income','expense')),
+          income BOOLEAN NOT NULL,
           created_at TIMESTAMP NOT NULL DEFAULT now()
         )
         """;
@@ -53,7 +53,7 @@ public final class App {
   }
 
   private static User createUser(Connection connection, String username) throws SQLException {
-    String sql = "INSERT INTO users (username) VALUES (?) RETURNING userID";
+    String sql = "INSERT INTO users (username) VALUES (?) RETURNING user_id";
     PreparedStatement statement = connection.prepareStatement(sql);
     statement.setString(1, username);
     try (statement; ResultSet resultSet = statement.executeQuery()) {
@@ -64,28 +64,28 @@ public final class App {
   }
 
   private static User getUserByUsername(Connection connection, String username) throws SQLException {
-    String sql = "SELECT userID, username FROM users WHERE username = ?";
+    String sql = "SELECT user_id, username FROM users WHERE username = ?";
     PreparedStatement statement = connection.prepareStatement(sql);
     statement.setString(1, username);
     try (statement; ResultSet resultSet = statement.executeQuery()) {
       if (!resultSet.next()) {
         return createUser(connection, username);
       }
-      return new User(resultSet.getLong("userID"), resultSet.getString("username"));
+      return new User(resultSet.getLong("user_id"), resultSet.getString("username"));
     }
   }
 
-  private static long createTransaction(Connection connection, long userId, int amountCents, String type)
+  private static long createTransaction(Connection connection, long userId, int amount, boolean income)
       throws SQLException {
     String sql = """
-        INSERT INTO transactions (userID, amount, type)
+        INSERT INTO transactions (user_id, amount, income)
         VALUES (?, ?, ?)
-        RETURNING transactionID
+        RETURNING transaction_id
         """;
     PreparedStatement statement = connection.prepareStatement(sql);
     statement.setLong(1, userId);
-    statement.setInt(2, amountCents);
-    statement.setString(3, type);
+    statement.setInt(2, amount);
+    statement.setBoolean(3, income);
     try (statement; ResultSet resultSet = statement.executeQuery()) {
       resultSet.next();
       return resultSet.getLong(1);
@@ -94,9 +94,9 @@ public final class App {
 
   private static Transaction getTransaction(Connection connection, long id) throws SQLException {
     String sql = """
-        SELECT transactionID, userID, amount, type, created_at
+        SELECT transaction_id, user_id, amount, income, created_at
         FROM transactions
-        WHERE transactionID = ?
+        WHERE transaction_id = ?
         """;
     PreparedStatement statement = connection.prepareStatement(sql);
     statement.setLong(1, id);
@@ -105,16 +105,16 @@ public final class App {
         return null;
       }
       return new Transaction(
-          resultSet.getLong("transactionID"),
-          resultSet.getLong("userID"),
+          resultSet.getLong("transaction_id"),
+          resultSet.getLong("user_id"),
           resultSet.getInt("amount"),
-          resultSet.getString("type"),
+          resultSet.getBoolean("income"),
           resultSet.getTimestamp("created_at"));
     }
   }
 
   private static boolean deleteTransaction(Connection connection, long id) throws SQLException {
-    String sql = "DELETE FROM transactions WHERE transactionID = ?";
+    String sql = "DELETE FROM transactions WHERE transaction_id = ?";
     PreparedStatement statement = connection.prepareStatement(sql);
     statement.setLong(1, id);
     try (statement) {
@@ -130,7 +130,7 @@ public final class App {
     System.out.println("User: " + user);
   
     // Create transaction
-    long transactionId = createTransaction(connection, user.id(), 4530, "income");
+    long transactionId = createTransaction(connection, user.id(), 4530, true);
 
     // Retrieve transaction
     Transaction transaction = getTransaction(connection, transactionId);
@@ -143,5 +143,5 @@ public final class App {
 
   private record User(long id, String username) {}
 
-  private record Transaction(long id, long userId, int amountCents, String type, Timestamp createdAt) {}
+  private record Transaction(long id, long userId, int amount, boolean income, Timestamp createdAt) {}
 }
