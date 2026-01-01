@@ -47,7 +47,7 @@ public final class App {
     System.out.println("User: " + user);
   
     // Create transaction
-    Transaction transaction = transactionService.createTransaction(user, 4530, true);
+    Transaction transaction = transactionService.addIncome(user, 4530);
 
     // Retrieve transaction
     System.out.println("User: " + user);

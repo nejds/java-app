@@ -20,15 +20,6 @@ public final class TransactionService {
     return users.getByUsernameOrCreate(username);
   }
 
-  public Transaction createTransaction(User user, int amount, boolean income) throws SQLException {
-    long id = transactions.create(user.id(), amount, income);
-    return transactions.get(id);
-  }
-
-  public boolean deleteTransaction(long id) throws SQLException {
-    return transactions.delete(id);
-  }
-
   public Transaction addExpense(User user, int amount) throws SQLException {
     return createTransaction(user, amount, false);
   }
@@ -47,6 +38,11 @@ public final class TransactionService {
 
   public List<Transaction> listTransactions(User user) throws SQLException {
     return transactions.listByUser(user.id());
+  }
+
+  private Transaction createTransaction(User user, int amount, boolean income) throws SQLException {
+    long id = transactions.create(user.id(), amount, income);
+    return transactions.get(id);
   }
 
   private boolean removeByType(User user, long transactionId, boolean income) throws SQLException {
