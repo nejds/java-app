@@ -2,7 +2,6 @@ package com.example.app;
 
 import com.example.app.db.Database;
 import com.example.app.db.Schema;
-import com.example.app.model.Transaction;
 import com.example.app.model.User;
 import com.example.app.repository.JdbcTransactionRepository;
 import com.example.app.repository.JdbcUserRepository;
@@ -12,6 +11,7 @@ import com.example.app.service.AnalyticsService;
 import com.example.app.service.TransactionService;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Scanner;
 
 public final class App {
   private App() {
@@ -45,22 +45,65 @@ public final class App {
     String userName = "gustav";
     User user = transactionService.getOrCreateUser(userName);
 
-    // Create transaction
-    transactionService.addIncome(user, 4530);
-    transactionService.addIncome(user, 3230);
-    transactionService.addIncome(user, 130);
-    transactionService.addExpense(user, 500);
-    transactionService.addExpense(user, 2130);
+    try (Scanner scanner = new Scanner(System.in)) {
+      boolean running = true;
+      while (running) {
+        System.out.println();
+        System.out.println("Choose a service:");
+        System.out.println("1) Add income");
+        System.out.println("2) Add expense");
+        System.out.println("3) List transactions");
+        System.out.println("4) Show net balance");
+        System.out.println("5) Delete user");
+        System.out.println("0) Exit");
+        System.out.print("> ");
 
-    // Retrieve transaction
-    System.out.println("User: " + user);
-    System.out.println("Net balance: " + analyticsService.getNetBalance(user));
+        String input = scanner.nextLine().trim();
+        int choice;
+        try {
+          choice = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+          System.out.println("Invalid selection. Enter a number from the list.");
+          continue;
+        }
 
-    transactionService.listTransactions(user).forEach(t -> {
-      System.out.println("Transaction: " + t);
-    });
-  
-    // Delete user + propagate delete to transactions
-    transactionService.deleteUser(user.id());
+        switch (choice) {
+          case 1 -> {
+            int amount = readAmount(scanner, "Enter income amount: ");
+            transactionService.addIncome(user, amount);
+            System.out.println("Income added.");
+          }
+          case 2 -> {
+            int amount = readAmount(scanner, "Enter expense amount: ");
+            transactionService.addExpense(user, amount);
+            System.out.println("Expense added.");
+          }
+          case 3 -> {
+            transactionService.listTransactions(user).forEach(t -> {
+              System.out.println("Transaction: " + t);
+            });
+          }
+          case 4 -> System.out.println("Net balance: " + analyticsService.getNetBalance(user));
+          case 5 -> {
+            boolean deleted = transactionService.deleteUser(user.id());
+            System.out.println(deleted ? "User deleted." : "User not found.");
+          }
+          case 0 -> running = false;
+          default -> System.out.println("Invalid selection. Enter a number from the list.");
+        }
+      }
+    }
+  }
+
+  private static int readAmount(Scanner scanner, String prompt) {
+    while (true) {
+      System.out.print(prompt);
+      String input = scanner.nextLine().trim();
+      try {
+        return Integer.parseInt(input);
+      } catch (NumberFormatException e) {
+        System.out.println("Invalid amount. Enter a whole number.");
+      }
+    }
   }
 }
