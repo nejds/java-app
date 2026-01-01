@@ -37,4 +37,14 @@ public final class JdbcUserRepository implements UserRepository {
       return new User(resultSet.getLong("user_id"), resultSet.getString("username"));
     }
   }
+
+  @Override
+  public boolean delete(long userId) throws SQLException {
+    String sql = "DELETE FROM users WHERE user_id = ?";
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setLong(1, userId);
+    try (statement) {
+      return statement.executeUpdate() == 1;
+    }
+  }
 }

@@ -20,6 +20,10 @@ public final class TransactionService {
     return users.getByUsernameOrCreate(username);
   }
 
+  public boolean deleteUser(long userId) throws SQLException {
+    return users.delete(userId);
+  }
+
   public Transaction addExpense(User user, int amount) throws SQLException {
     return createTransaction(user, amount, false);
   }

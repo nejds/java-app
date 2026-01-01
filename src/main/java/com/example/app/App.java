@@ -44,17 +44,23 @@ public final class App {
     // Login as user
     String userName = "gustav";
     User user = transactionService.getOrCreateUser(userName);
-    System.out.println("User: " + user);
-  
+
     // Create transaction
-    Transaction transaction = transactionService.addIncome(user, 4530);
+    transactionService.addIncome(user, 4530);
+    transactionService.addIncome(user, 3230);
+    transactionService.addIncome(user, 130);
+    transactionService.addExpense(user, 500);
+    transactionService.addExpense(user, 2130);
 
     // Retrieve transaction
     System.out.println("User: " + user);
-    System.out.println("Transaction: " + transaction);
     System.out.println("Net balance: " + analyticsService.getNetBalance(user));
 
-    // Delete said transaction
-    // transactionService.deleteTransaction(transaction.id());
+    transactionService.listTransactions(user).forEach(t -> {
+      System.out.println("Transaction: " + t);
+    });
+  
+    // Delete user + propagate delete to transactions
+    transactionService.deleteUser(user.id());
   }
 }
