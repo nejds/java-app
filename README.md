@@ -1,15 +1,15 @@
 # java-app
 
-Basic Java application skeleton using Maven.
+Basic Java application skeleton using Gradle.
 
 ## Run
 
 ```bash
-mvn -q -DskipTests package
+./gradlew -q -x test build
 DB_URL=jdbc:postgresql://localhost:5432/postgres \
 DB_USER=postgres \
 DB_PASSWORD=mysecretpassword \
-java -cp target/java-app-0.1.0-SNAPSHOT.jar com.example.app.App
+java -cp build/libs/java-app-0.1.0-SNAPSHOT.jar com.example.app.App
 ```
 
 Notes:
@@ -18,5 +18,5 @@ Notes:
 ## Test
 
 ```bash
-mvn test
+./gradlew test
 ```
