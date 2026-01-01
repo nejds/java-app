@@ -4,8 +4,11 @@ import com.example.app.db.Database;
 import com.example.app.db.Schema;
 import com.example.app.model.Transaction;
 import com.example.app.model.User;
+import com.example.app.repository.JdbcTransactionRepository;
+import com.example.app.repository.JdbcUserRepository;
 import com.example.app.repository.TransactionRepository;
 import com.example.app.repository.UserRepository;
+import com.example.app.service.TransactionService;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -32,23 +35,23 @@ public final class App {
   }
 
   private static void runDemo(Connection connection) throws SQLException {
-    UserRepository userRepository = new UserRepository(connection);
-    TransactionRepository transactionRepository = new TransactionRepository(connection);
+    UserRepository userRepository = new JdbcUserRepository(connection);
+    TransactionRepository transactionRepository = new JdbcTransactionRepository(connection);
+    TransactionService transactionService = new TransactionService(userRepository, transactionRepository);
 
     // Login as user
     String userName = "gustav";
-    User user = userRepository.getByUsernameOrCreate(userName);
+    User user = transactionService.getOrCreateUser(userName);
     System.out.println("User: " + user);
   
     // Create transaction
-    long transactionId = transactionRepository.create(user.id(), 4530, true);
+    Transaction transaction = transactionService.createTransaction(user, 4530, true);
 
     // Retrieve transaction
-    Transaction transaction = transactionRepository.get(transactionId);
     System.out.println("User: " + user);
     System.out.println("Transaction: " + transaction);
 
     // Delete said transaction
-    // transactionRepository.delete(transactionId);
+    // transactionService.deleteTransaction(transaction.id());
   }
 }
