@@ -5,6 +5,7 @@ import com.example.app.model.User;
 import com.example.app.repository.TransactionRepository;
 import com.example.app.repository.UserRepository;
 import java.sql.SQLException;
+import java.util.List;
 
 public final class TransactionService {
   private final UserRepository users;
@@ -26,5 +27,36 @@ public final class TransactionService {
 
   public boolean deleteTransaction(long id) throws SQLException {
     return transactions.delete(id);
+  }
+
+  public Transaction addExpense(User user, int amount) throws SQLException {
+    return createTransaction(user, amount, false);
+  }
+
+  public Transaction addIncome(User user, int amount) throws SQLException {
+    return createTransaction(user, amount, true);
+  }
+
+  public boolean removeExpense(User user, long transactionId) throws SQLException {
+    return removeByType(user, transactionId, false);
+  }
+
+  public boolean removeIncome(User user, long transactionId) throws SQLException {
+    return removeByType(user, transactionId, true);
+  }
+
+  public List<Transaction> listTransactions(User user) throws SQLException {
+    return transactions.listByUser(user.id());
+  }
+
+  private boolean removeByType(User user, long transactionId, boolean income) throws SQLException {
+    Transaction transaction = transactions.get(transactionId);
+    if (transaction == null) {
+      return false;
+    }
+    if (transaction.userId() != user.id() || transaction.income() != income) {
+      return false;
+    }
+    return transactions.delete(transactionId);
   }
 }

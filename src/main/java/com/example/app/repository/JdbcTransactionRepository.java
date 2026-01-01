@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class JdbcTransactionRepository implements TransactionRepository {
   private final Connection connection;
@@ -74,6 +76,30 @@ public final class JdbcTransactionRepository implements TransactionRepository {
     try (statement; ResultSet resultSet = statement.executeQuery()) {
       resultSet.next();
       return resultSet.getInt("net");
+    }
+  }
+
+  @Override
+  public List<Transaction> listByUser(long userId) throws SQLException {
+    String sql = """
+        SELECT transaction_id, user_id, amount, income, created_at
+        FROM transactions
+        WHERE user_id = ?
+        ORDER BY created_at DESC, transaction_id DESC
+        """;
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setLong(1, userId);
+    try (statement; ResultSet resultSet = statement.executeQuery()) {
+      List<Transaction> results = new ArrayList<>();
+      while (resultSet.next()) {
+        results.add(new Transaction(
+            resultSet.getLong("transaction_id"),
+            resultSet.getLong("user_id"),
+            resultSet.getInt("amount"),
+            resultSet.getBoolean("income"),
+            resultSet.getTimestamp("created_at")));
+      }
+      return results;
     }
   }
 }

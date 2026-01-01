@@ -2,6 +2,7 @@ package com.example.app.repository;
 
 import com.example.app.model.Transaction;
 import java.sql.SQLException;
+import java.util.List;
 
 public interface TransactionRepository {
   long create(long userId, int amount, boolean income) throws SQLException;
@@ -11,4 +12,6 @@ public interface TransactionRepository {
   boolean delete(long id) throws SQLException;
 
   int getNetBalance(long userId) throws SQLException;
+
+  List<Transaction> listByUser(long userId) throws SQLException;
 }
