@@ -61,4 +61,19 @@ public final class JdbcTransactionRepository implements TransactionRepository {
       return statement.executeUpdate() == 1;
     }
   }
+
+  @Override
+  public int getNetBalance(long userId) throws SQLException {
+    String sql = """
+        SELECT COALESCE(SUM(CASE WHEN income THEN amount ELSE -amount END), 0) AS net
+        FROM transactions
+        WHERE user_id = ?
+        """;
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setLong(1, userId);
+    try (statement; ResultSet resultSet = statement.executeQuery()) {
+      resultSet.next();
+      return resultSet.getInt("net");
+    }
+  }
 }

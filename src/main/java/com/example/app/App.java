@@ -8,6 +8,7 @@ import com.example.app.repository.JdbcTransactionRepository;
 import com.example.app.repository.JdbcUserRepository;
 import com.example.app.repository.TransactionRepository;
 import com.example.app.repository.UserRepository;
+import com.example.app.service.AnalyticsService;
 import com.example.app.service.TransactionService;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -38,6 +39,7 @@ public final class App {
     UserRepository userRepository = new JdbcUserRepository(connection);
     TransactionRepository transactionRepository = new JdbcTransactionRepository(connection);
     TransactionService transactionService = new TransactionService(userRepository, transactionRepository);
+    AnalyticsService analyticsService = new AnalyticsService(transactionRepository);
 
     // Login as user
     String userName = "gustav";
@@ -50,6 +52,7 @@ public final class App {
     // Retrieve transaction
     System.out.println("User: " + user);
     System.out.println("Transaction: " + transaction);
+    System.out.println("Net balance: " + analyticsService.getNetBalance(user));
 
     // Delete said transaction
     // transactionService.deleteTransaction(transaction.id());

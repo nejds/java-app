@@ -9,4 +9,6 @@ public interface TransactionRepository {
   Transaction get(long id) throws SQLException;
 
   boolean delete(long id) throws SQLException;
+
+  int getNetBalance(long userId) throws SQLException;
 }
